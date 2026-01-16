@@ -38,6 +38,11 @@ class MongoConfig(BaseSettings):
         alias="MONGODB_GAMES_COLLECTION",
     )
 
+    mongodb_game_moves_collection: str = Field(
+        default="games_moves",
+        alias="MONGODB_GAME_MOVES_COLLECTION",
+    )
+
     @computed_field
     @property
     def mongodb_connection_uri(self) -> str:

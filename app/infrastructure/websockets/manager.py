@@ -41,7 +41,6 @@ class ConnectionManager(BaseConnectionManager):
             self.connections_map[key].remove(websocket)
 
     async def send_json_to_all(self, key: str, data: dict[str, Any]):
-        """Отправляет JSON данные всем подключенным клиентам по ключу."""
         message = json.dumps(data)
         disconnected = []
         for websocket in self.connections_map[key]:

@@ -17,6 +17,7 @@ from domain.base.exceptions import (
     ApplicationException,
     DomainException,
 )
+from domain.games.exceptions import GameNotFoundException
 from domain.users.exceptions import (
     InvalidCredentialsException,
     UserAlreadyExistsException,
@@ -32,7 +33,9 @@ async def application_exception_handler(
     if isinstance(exc, LogicException):
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     elif isinstance(exc, DomainException):
-        if isinstance(exc, UserException):
+        if isinstance(exc, GameNotFoundException):
+            status_code = status.HTTP_404_NOT_FOUND
+        elif isinstance(exc, UserException):
             if isinstance(exc, (InvalidCredentialsException, UserNotFoundException)):
                 status_code = status.HTTP_401_UNAUTHORIZED
             elif isinstance(exc, UserAlreadyExistsException):
