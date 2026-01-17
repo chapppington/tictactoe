@@ -57,6 +57,19 @@ class DummyInMemoryGameRepository(BaseGameRepository):
         ]
         return user_games[offset : offset + limit]
 
+    async def count_user_games(
+        self,
+        user_id: UUID,
+        status: GameStatus | None = None,
+    ) -> int:
+        user_games = [
+            game
+            for game in self._saved_games
+            if (game.player_x_id == user_id or game.player_o_id == user_id)
+            and (status is None or game.status == status)
+        ]
+        return len(user_games)
+
 
 @dataclass
 class DummyInMemoryGameMoveRepository(BaseGameMoveRepository):

@@ -91,6 +91,23 @@ class MongoDBGamesRepository(BaseGameRepository, BaseMongoDBRepository):
 
         return games
 
+    async def count_user_games(
+        self,
+        user_id: UUID,
+        status: GameStatus | None = None,
+    ) -> int:
+        filter_query = {
+            "$or": [
+                {"player_x_id": str(user_id)},
+                {"player_o_id": str(user_id)},
+            ],
+        }
+
+        if status:
+            filter_query["status"] = status.value
+
+        return await self._collection.count_documents(filter=filter_query)
+
 
 @dataclass
 class MongoDBGameMoveRepository(BaseGameMoveRepository, BaseMongoDBRepository):

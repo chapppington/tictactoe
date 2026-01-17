@@ -67,13 +67,21 @@ async def create_game(
     command = CreateGameCommand(player_x_id=user_id)
     game, *_ = await mediator.handle_command(command)
 
-    # Отправляем обновление через WebSocket
+    # Отправляем обновление через WebSocket для участников игры
     await _send_game_update(
         game_id=game.oid,
         event_type="game_created",
         data=GameResponseSchema.from_entity(game).model_dump(mode="json"),
         container=container,
     )
+
+    # Отправляем уведомление о новой ожидающей игре всем подписанным
+    if game.status == GameStatus.WAITING:
+        await _send_waiting_games_update(
+            event_type="new_waiting_game",
+            data=GameResponseSchema.from_entity(game).model_dump(mode="json"),
+            container=container,
+        )
 
     return ApiResponse[GameResponseSchema](
         data=GameResponseSchema.from_entity(game),
@@ -136,7 +144,7 @@ async def get_my_games(
         limit=limit,
         offset=offset,
     )
-    games = await mediator.handle_query(query)
+    games, total = await mediator.handle_query(query)
 
     return ApiResponse[ListPaginatedResponse[GameResponseSchema]](
         data=ListPaginatedResponse[GameResponseSchema](
@@ -144,7 +152,7 @@ async def get_my_games(
             pagination=PaginationOut(
                 limit=limit,
                 offset=offset,
-                total=len(games),
+                total=total,
             ),
         ),
     )
@@ -196,7 +204,7 @@ async def join_game(
     command = JoinGameCommand(game_id=game_id, player_o_id=user_id)
     game, *_ = await mediator.handle_command(command)
 
-    # Отправляем обновление через WebSocket
+    # Отправляем обновление через WebSocket для участников игры
     await _send_game_update(
         game_id=game_id,
         event_type="player_joined",
@@ -204,6 +212,13 @@ async def join_game(
             "game": GameResponseSchema.from_entity(game).model_dump(mode="json"),
             "player_id": str(user_id),
         },
+        container=container,
+    )
+
+    # Уведомляем что игра больше не ожидает (удалена из списка ожидающих)
+    await _send_waiting_games_update(
+        event_type="waiting_game_removed",
+        data={"game_id": str(game_id)},
         container=container,
     )
 
@@ -300,6 +315,52 @@ async def _send_game_update(
             "data": data,
         },
     )
+
+
+async def _send_waiting_games_update(
+    event_type: str,
+    data: dict,
+    container,
+):
+    """Отправка обновления списка ожидающих игр через WebSocket."""
+    connection_manager: BaseConnectionManager = container.resolve(BaseConnectionManager)
+    await connection_manager.send_json_to_all(
+        key="waiting_games",
+        data={
+            "event": event_type,
+            "data": data,
+        },
+    )
+
+
+@router.websocket("/waiting-games/ws")
+async def websocket_waiting_games(
+    websocket: WebSocket,
+    user_id: UUID = Depends(get_current_user_id_from_websocket),
+    container=Depends(init_container),
+):
+    """WebSocket endpoint для получения уведомлений о новых ожидающих играх."""
+    await websocket.accept()
+
+    connection_manager: BaseConnectionManager = container.resolve(BaseConnectionManager)
+
+    await connection_manager.accept_connection(websocket=websocket, key="waiting_games")
+
+    try:
+        while True:
+            message = await websocket.receive_json()
+
+            if message.get("event") == "ping":
+                await websocket.send_json({"event": "pong"})
+            else:
+                await websocket.send_json(
+                    {
+                        "event": "error",
+                        "data": {"message": "Unknown event"},
+                    },
+                )
+    except WebSocketDisconnect:
+        await connection_manager.remove_connection(websocket=websocket, key="waiting_games")
 
 
 @router.websocket("/{game_id}/ws")

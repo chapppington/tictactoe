@@ -19,8 +19,8 @@ auth_config = AuthXConfig(
     JWT_HEADER_NAME="Authorization",
     JWT_HEADER_TYPE="Bearer",
     JWT_COOKIE_CSRF_PROTECT=False,  # выключаем csrf чтобы работал refresh endpoint
-    JWT_COOKIE_SAMESITE="lax",  # lax для работы с HTTP, none требует HTTPS
-    JWT_COOKIE_SECURE=False,  # False для HTTP, True для HTTPS
+    JWT_COOKIE_SAMESITE="lax",
+    JWT_COOKIE_SECURE=False,  # False для localhost HTTP, True для HTTPS в продакшене
 )
 
 auth_service = AuthX(config=auth_config)

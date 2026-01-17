@@ -147,6 +147,16 @@ class GameService:
             offset=offset,
         )
 
+    async def count_user_games(
+        self,
+        user_id: UUID,
+        status: GameStatus | None = None,
+    ) -> int:
+        return await self.game_repository.count_user_games(
+            user_id=user_id,
+            status=status,
+        )
+
     async def get_game_moves(self, game_id: UUID) -> list[GameMove]:
         await self.get_by_id(game_id)
         return await self.game_move_repository.get_by_game_id(game_id)

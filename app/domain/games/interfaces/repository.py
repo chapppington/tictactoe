@@ -37,6 +37,13 @@ class BaseGameRepository(ABC):
         offset: int = 0,
     ) -> list[GameEntity]: ...
 
+    @abstractmethod
+    async def count_user_games(
+        self,
+        user_id: UUID,
+        status: GameStatus | None = None,
+    ) -> int: ...
+
 
 class BaseGameMoveRepository(ABC):
     @abstractmethod

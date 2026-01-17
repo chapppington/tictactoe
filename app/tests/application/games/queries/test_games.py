@@ -144,18 +144,20 @@ async def test_get_user_games_query(
         JoinGameCommand(game_id=game1.oid, player_o_id=user2.oid),
     )
 
-    user1_games = await mediator.handle_query(
+    user1_games, user1_total = await mediator.handle_query(
         GetUserGamesQuery(user_id=user1.oid),
     )
 
     assert len(user1_games) >= 1
+    assert user1_total >= 1
     assert any(game.oid == game1.oid for game in user1_games)
 
-    user2_games = await mediator.handle_query(
+    user2_games, user2_total = await mediator.handle_query(
         GetUserGamesQuery(user_id=user2.oid),
     )
 
     assert len(user2_games) >= 2
+    assert user2_total >= 2
     assert any(game.oid == game1.oid for game in user2_games)
     assert any(game.oid == game2.oid for game in user2_games)
 
@@ -188,17 +190,19 @@ async def test_get_user_games_query_with_status_filter(
         JoinGameCommand(game_id=game.oid, player_o_id=user2.oid),
     )
 
-    waiting_games = await mediator.handle_query(
+    waiting_games, waiting_total = await mediator.handle_query(
         GetUserGamesQuery(user_id=user1.oid, status=GameStatus.WAITING),
     )
 
     assert len(waiting_games) == 0
+    assert waiting_total == 0
 
-    active_games = await mediator.handle_query(
+    active_games, active_total = await mediator.handle_query(
         GetUserGamesQuery(user_id=user1.oid, status=GameStatus.ACTIVE),
     )
 
     assert len(active_games) >= 1
+    assert active_total >= 1
     assert any(g.oid == game.oid for g in active_games)
 
 
