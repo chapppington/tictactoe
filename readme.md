@@ -2,6 +2,8 @@
 
 Backend API для игры в крестики-нолики. Игроки могут создавать игры, присоединяться к ним и играть через REST API с real-time обновлениями через WebSocket.
 
+**Фронтенд:** [tictactoe_frontend](https://github.com/chapppington/tictactoe_frontend)
+
 ## Технологии
 
 - **Python 3.13** — асинхронный код
