@@ -1,7 +1,6 @@
 from fastapi import (
     APIRouter,
     Depends,
-    Response,
     status,
 )
 
@@ -71,7 +70,6 @@ async def register(
 )
 async def login(
     request: LoginRequestSchema,
-    response: Response,
     container=Depends(init_container),
 ) -> ApiResponse[TokenResponseSchema]:
     """Аутентификация пользователя и получение токенов."""
@@ -88,10 +86,6 @@ async def login(
     user_id = str(user.oid)
     access_token = auth_service.create_access_token(uid=user_id)
     refresh_token = auth_service.create_refresh_token(uid=user_id)
-
-    # Устанавливаем токены в cookies
-    auth_service.set_access_cookies(token=access_token, response=response)
-    auth_service.set_refresh_cookies(token=refresh_token, response=response)
 
     return ApiResponse[TokenResponseSchema](
         data=TokenResponseSchema(
@@ -111,16 +105,12 @@ async def login(
     },
 )
 async def refresh_token(
-    response: Response,
     refresh_payload: dict = Depends(get_refresh_token_payload),
 ) -> ApiResponse[RefreshTokenResponseSchema]:
-    """Обновление access токена с помощью refresh токена из cookies."""
+    """Обновление access токена с помощью refresh токена."""
     # Создаем новый access токен
     user_id = refresh_payload.sub
     access_token = auth_service.create_access_token(uid=user_id)
-
-    # Устанавливаем новый access токен в cookie
-    auth_service.set_access_cookies(token=access_token, response=response)
 
     return ApiResponse[RefreshTokenResponseSchema](
         data=RefreshTokenResponseSchema(

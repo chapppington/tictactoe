@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from presentation.api.exceptions import setup_exception_handlers
 from presentation.api.healthcheck import healthcheck_router
@@ -11,6 +12,15 @@ def create_app() -> FastAPI:
         description="A RESTful API for tictactoe applications, offering authentication and user management.",
         docs_url="/api/docs",
         debug=True,
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:3000"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
     )
 
     setup_exception_handlers(app)
