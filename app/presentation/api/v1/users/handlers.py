@@ -43,3 +43,27 @@ async def get_current_user(
     return ApiResponse[UserResponseSchema](
         data=UserResponseSchema.from_entity(user),
     )
+
+
+@router.get(
+    "/{user_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=ApiResponse[UserResponseSchema],
+    responses={
+        status.HTTP_200_OK: {"model": ApiResponse[UserResponseSchema]},
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponseSchema},
+    },
+)
+async def get_user_by_id(
+    user_id: UUID,
+    container=Depends(init_container),
+) -> ApiResponse[UserResponseSchema]:
+    """Получение информации о пользователе по ID."""
+    mediator: Mediator = container.resolve(Mediator)
+
+    query = GetUserByIdQuery(user_id=user_id)
+    user = await mediator.handle_query(query)
+
+    return ApiResponse[UserResponseSchema](
+        data=UserResponseSchema.from_entity(user),
+    )

@@ -57,17 +57,22 @@ class GetUserGamesQuery(BaseQuery):
 
 @dataclass(frozen=True)
 class GetUserGamesQueryHandler(
-    BaseQueryHandler[GetUserGamesQuery, list[GameEntity]],
+    BaseQueryHandler[GetUserGamesQuery, tuple[list[GameEntity], int]],
 ):
     game_service: GameService
 
-    async def handle(self, query: GetUserGamesQuery) -> list[GameEntity]:
-        return await self.game_service.get_user_games(
+    async def handle(self, query: GetUserGamesQuery) -> tuple[list[GameEntity], int]:
+        games = await self.game_service.get_user_games(
             user_id=query.user_id,
             status=query.status,
             limit=query.limit,
             offset=query.offset,
         )
+        total = await self.game_service.count_user_games(
+            user_id=query.user_id,
+            status=query.status,
+        )
+        return games, total
 
 
 @dataclass(frozen=True)
